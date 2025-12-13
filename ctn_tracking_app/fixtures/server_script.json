@@ -1,0 +1,40 @@
+[
+ {
+  "allow_guest": 0,
+  "api_method": null,
+  "cron_format": null,
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Server Script",
+  "doctype_event": "After Save (Submitted Document)",
+  "enable_rate_limit": 0,
+  "event_frequency": "All",
+  "modified": "2025-12-13 01:17:57.441559",
+  "module": "CTN Tracking App",
+  "name": "Carton Transfer Piece Server Script",
+  "rate_limit_count": 5,
+  "rate_limit_seconds": 86400,
+  "reference_doctype": "Carton Transfer peice",
+  "script": "# Carton Transfer Piece — create ONE Material Transfer when state becomes Received,\r\n# and move each Carton to the destination warehouse.\r\n\r\ntry:\r\n    state_now  = (doc.workflow_state or doc.get(\"status\") or \"\").strip()\r\n\r\n    if state_now not in (\"Received\", \"Recieved\"):\r\n        raise StopIteration\r\n\r\n    from_wh = doc.get(\"from_warehouse\") or doc.get(\"from\")\r\n    to_wh   = doc.get(\"to_warehouse\")   or doc.get(\"to\")\r\n    if not from_wh or not to_wh:\r\n        frappe.log_error(\r\n            title=\"CTN Received: missing warehouses\",\r\n            message=f\"{doc.name}: from='{from_wh}' to='{to_wh}'\"\r\n        )\r\n        raise StopIteration\r\n\r\n    # Idempotency: skip if an SE already exists for this piece\r\n    existing = frappe.db.exists(\r\n        \"Stock Entry\",\r\n        {\"docstatus\": [\"!=\", 2], \"custom_ctn_transfer_piece\": doc.name}\r\n    )\r\n    if existing:\r\n        frappe.log_error(title=\"CTN Received: SE already exists\", message=f\"{doc.name} → {existing}\")\r\n        raise StopIteration\r\n\r\n    # Aggregate items across all CTN Boxes in this piece\r\n    totals = {}  # {item_code: total_qty}\r\n\r\n    for row in (doc.get(\"ctn\") or []):\r\n        ctn_ref = row.get(\"ctn\") or row.get(\"ctn_no\") or row.get(\"name\")\r\n        if not ctn_ref:\r\n            continue\r\n\r\n        # Move CTN Box to destination\r\n        try:\r\n            frappe.db.set_value(\"CTN BOX\", ctn_ref, \"warehouse\", to_wh)\r\n        except Exception:\r\n            frappe.log_error(f\"Failed to update CTN Box '{ctn_ref}' → {to_wh}\", \"CTN Box Update Error\")\r\n\r\n        # Sum items inside CTN Box\r\n        try:\r\n            box = frappe.get_doc(\"CTN BOX\", ctn_ref)\r\n        except Exception:\r\n            frappe.log_error(f\"Missing CTN Box '{ctn_ref}'\", \"CTN Fetch Error\")\r\n            continue\r\n\r\n        for it in box.get(\"items\") :\r\n            item_code = it.get(\"item\")\r\n            qty_raw   = it.get(\"qty\")\r\n            if not item_code or qty_raw is None:\r\n                continue\r\n            try:\r\n                qty = float(qty_raw)\r\n            except Exception:\r\n                qty = 0\r\n            if qty <= 0:\r\n                continue\r\n\r\n            # ❗ no augmented assignment in server scripts\r\n            totals[item_code] = (totals.get(item_code, 0) + qty)\r\n\r\n    if not totals:\r\n        frappe.log_error(\"CTN Received: no items found across CTNs\", f\"{doc.name}\")\r\n        raise StopIteration\r\n\r\n    # Create ONE Material Transfer covering all aggregated items\r\n    se = frappe.new_doc(\"Stock Entry\")\r\n    se.stock_entry_type = \"Material Transfer\"\r\n    se.company = doc.company\r\n    se.from_warehouse = from_wh\r\n    se.to_warehouse   = to_wh\r\n    se.custom_ctn_transfer_piece = doc.name  # custom Link field on Stock Entry\r\n\r\n    for item_code, qty in totals.items():\r\n        row = se.append(\"items\", {})\r\n        row.item_code   = item_code\r\n        row.qty         = qty\r\n\r\n    se.insert(ignore_permissions=True)\r\n    se.submit()\r\n\r\n    frappe.get_doc({\r\n        \"doctype\": \"Comment\",\r\n        \"comment_type\": \"Info\",\r\n        \"reference_doctype\": doc.doctype,\r\n        \"reference_name\": doc.name,\r\n        \"content\": f\"✅ Material Transfer created: <b>{se.name}</b> | {from_wh} → {to_wh}\"\r\n    }).insert(ignore_permissions=True)\r\n\r\nexcept StopIteration:\r\n    pass\r\nexcept Exception:\r\n    frappe.log_error(frappe.get_traceback(), \"CTN Server Script Error (on_update_after_submit)\")\r\n",
+  "script_type": "DocType Event"
+ },
+ {
+  "allow_guest": 0,
+  "api_method": null,
+  "cron_format": null,
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Server Script",
+  "doctype_event": "After Submit",
+  "enable_rate_limit": 0,
+  "event_frequency": "All",
+  "modified": "2025-12-13 02:21:49.972988",
+  "module": "CTN Tracking App",
+  "name": "Stock Entry - On Submit",
+  "rate_limit_count": 5,
+  "rate_limit_seconds": 86400,
+  "reference_doctype": "Stock Entry",
+  "script": "piece_name = doc.get(\"custom_carton_transfer_piece\")\n\nfrappe.db.set_value(\"Carton Transfer peice\", piece_name , \"stock_entry\", doc.name)",
+  "script_type": "DocType Event"
+ }
+]

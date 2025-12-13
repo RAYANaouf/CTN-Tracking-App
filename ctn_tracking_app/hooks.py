@@ -145,6 +145,16 @@ app_license = "mit"
 # 	}
 # }
 
+
+
+doc_events = {
+    "Stock Entry": {
+        "on_submit": ["ctn_tracking_app.api.update_carton_warehouse" ],
+        "on_cancel": ["ctn_tracking_app.api.update_carton_warehouse" ]
+    },
+}
+
+
 # Scheduled Tasks
 # ---------------
 
@@ -242,3 +252,33 @@ app_license = "mit"
 # 	"Logging DocType Name": 30  # days to retain logs
 # }
 
+
+
+fixtures = [
+    # =====================
+    # CTN CUSTOM FIELDS
+    # =====================
+    {
+        "dt": "Custom Field",
+        "filters": [["module", "=", "CTN Tracking App"]]
+    },
+
+    # =====================
+    # CTN CHILD TABLES (DocTypes with istable = 1)
+    # =====================
+    {
+        "dt": "DocType",
+        "filters": [
+            ["module", "=", "CTN Tracking App"],
+            ["istable", "=", 1]
+        ]
+    },
+
+    # =====================
+    # SCRIPTS & LOGIC
+    # =====================
+    {"dt": "Client Script", "filters": [["module", "=", "CTN Tracking App"]]},
+    {"dt": "Server Script", "filters": [["module", "=", "CTN Tracking App"]]},
+    {"dt": "Print Format", "filters": [["module", "=", "CTN Tracking App"]]},
+    {"dt": "Report", "filters": [["module", "=", "CTN Tracking App"]]},
+]
