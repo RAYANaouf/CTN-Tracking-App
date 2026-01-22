@@ -28,13 +28,13 @@
   "doctype_event": "After Submit",
   "enable_rate_limit": 0,
   "event_frequency": "All",
-  "modified": "2025-12-13 02:21:49.972988",
+  "modified": "2025-12-28 08:14:41.202676",
   "module": "CTN Tracking App",
   "name": "Stock Entry - On Submit",
   "rate_limit_count": 5,
   "rate_limit_seconds": 86400,
   "reference_doctype": "Stock Entry",
-  "script": "piece_name = doc.get(\"custom_carton_transfer_piece\")\n\nfrappe.db.set_value(\"Carton Transfer peice\", piece_name , \"stock_entry\", doc.name)",
+  "script": "piece_name = doc.get(\"custom_carton_transfer_piece\")\r\n\r\nif piece_name and frappe.db.exists(\"Carton Transfer Piece\", piece_name):\r\n    frappe.db.set_value(\r\n        \"Carton Transfer Piece\",\r\n        piece_name,\r\n        \"stock_entry\",\r\n        doc.name\r\n    )\r\n",
   "script_type": "DocType Event"
  }
 ]
