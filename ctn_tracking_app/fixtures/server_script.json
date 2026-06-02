@@ -36,5 +36,24 @@
   "reference_doctype": "Stock Entry",
   "script": "piece_name = doc.get(\"custom_carton_transfer_piece\")\r\n\r\nif piece_name and frappe.db.exists(\"Carton Transfer Piece\", piece_name):\r\n    frappe.db.set_value(\r\n        \"Carton Transfer Piece\",\r\n        piece_name,\r\n        \"stock_entry\",\r\n        doc.name\r\n    )\r\n",
   "script_type": "DocType Event"
+ },
+ {
+  "allow_guest": 0,
+  "api_method": null,
+  "cron_format": null,
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Server Script",
+  "doctype_event": "Before Save",
+  "enable_rate_limit": 0,
+  "event_frequency": "All",
+  "modified": "2026-06-02 16:51:01.534546",
+  "module": "CTN Tracking App",
+  "name": "Validate Stock Entry Cartons",
+  "rate_limit_count": 5,
+  "rate_limit_seconds": 86400,
+  "reference_doctype": "Stock Entry",
+  "script": "if doc.custom_transfer_by_carton:\r\n    if not doc.from_warehouse:\r\n        frappe.throw(\"<b>Error:</b> 'Default Source Warehouse' field is mandatory when transfer by carton is enabled.\")\r\n\r\n    if not doc.custom_carton_table or len(doc.custom_carton_table) == 0:\r\n        frappe.throw(\"<b>Error:</b> The carton table cannot be empty if 'Transfer By Carton' is checked.\")\r\n\r\n    for row in doc.custom_carton_table:\r\n        if row.carton:\r\n            carton_db = frappe.get_doc(\"Carton\", row.carton)\r\n            \r\n            if carton_db.company != doc.company:\r\n                frappe.throw(f\"Carton <b>{row.carton}</b> does not belong to company {doc.company}.\")\r\n            \r\n            if carton_db.warehouse != doc.from_warehouse:\r\n                frappe.throw(\r\n                    f\"Action prohibited! Carton <b>{row.carton}</b> is currently stored in warehouse \"\r\n                    f\"<b>{carton_db.warehouse}</b>. It does not match the selected source warehouse \"\r\n                    f\"(<b>{doc.from_warehouse}</b>).\"\r\n                )\r\nelse:\r\n    if (doc.custom_carton_table and len(doc.custom_carton_table) > 0) or (doc.items and len(doc.items) > 0):\r\n        doc.custom_carton_table = []\r\n        doc.items = []\r\n        frappe.msgprint(\"Note: Both carton and items tables have been cleared automatically because 'Transfer By Carton' is disabled.\")",
+  "script_type": "DocType Event"
  }
 ]
