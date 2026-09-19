@@ -84,7 +84,7 @@ app_license = "mit"
 # ------------
 
 # before_install = "ctn_tracking_app.install.before_install"
-after_install = "ctn_tracking_app.install.after_migrate"
+# after_install = "ctn_tracking_app.install.after_install"
 
 # Uninstallation
 # ------------
@@ -150,13 +150,10 @@ after_install = "ctn_tracking_app.install.after_migrate"
 
 doc_events = {
     "Stock Entry": {
-        "validate": ["ctn_tracking_app.api.validate_stock_incident"],
         "on_submit": ["ctn_tracking_app.api.update_carton_warehouse"],
         "on_cancel": ["ctn_tracking_app.api.update_carton_warehouse"],
     },
 }
-
-after_migrate = ["ctn_tracking_app.install.after_migrate"]
 
 
 # Scheduled Tasks
@@ -285,5 +282,4 @@ fixtures = [
     {"dt": "Server Script", "filters": [["module", "=", "CTN Tracking App"]]},
     {"dt": "Print Format", "filters": [["module", "=", "CTN Tracking App"]]},
     {"dt": "Report", "filters": [["module", "=", "CTN Tracking App"]]},
-    {"dt": "Stock Incident Reason"},
 ]
