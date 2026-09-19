@@ -43,6 +43,7 @@ app_license = "mit"
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
+# Stock Entry incident UI is a Client Script: "Stock Entry Incident"
 # doctype_js = {"doctype" : "public/js/doctype.js"}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -83,7 +84,7 @@ app_license = "mit"
 # ------------
 
 # before_install = "ctn_tracking_app.install.before_install"
-# after_install = "ctn_tracking_app.install.after_install"
+after_install = "ctn_tracking_app.install.after_migrate"
 
 # Uninstallation
 # ------------
@@ -149,10 +150,13 @@ app_license = "mit"
 
 doc_events = {
     "Stock Entry": {
-        "on_submit": ["ctn_tracking_app.api.update_carton_warehouse" ],
-        "on_cancel": ["ctn_tracking_app.api.update_carton_warehouse" ]
+        "validate": ["ctn_tracking_app.api.validate_stock_incident"],
+        "on_submit": ["ctn_tracking_app.api.update_carton_warehouse"],
+        "on_cancel": ["ctn_tracking_app.api.update_carton_warehouse"],
     },
 }
+
+after_migrate = ["ctn_tracking_app.install.after_migrate"]
 
 
 # Scheduled Tasks
@@ -281,4 +285,5 @@ fixtures = [
     {"dt": "Server Script", "filters": [["module", "=", "CTN Tracking App"]]},
     {"dt": "Print Format", "filters": [["module", "=", "CTN Tracking App"]]},
     {"dt": "Report", "filters": [["module", "=", "CTN Tracking App"]]},
+    {"dt": "Stock Incident Reason"},
 ]
