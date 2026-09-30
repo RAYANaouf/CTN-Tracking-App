@@ -54,7 +54,7 @@
   },
   {
    "fieldname": "qty",
-   "fieldtype": "Int",
+   "fieldtype": "Float",
    "in_list_view": 1,
    "label": "Quantity",
    "reqd": 1

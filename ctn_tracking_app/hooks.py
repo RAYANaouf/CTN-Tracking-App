@@ -150,6 +150,7 @@ app_license = "mit"
 
 doc_events = {
     "Stock Entry": {
+        "validate": ["ctn_tracking_app.api.validate_carton_transfer"],
         "on_submit": ["ctn_tracking_app.api.update_carton_warehouse"],
         "on_cancel": ["ctn_tracking_app.api.update_carton_warehouse"],
     },

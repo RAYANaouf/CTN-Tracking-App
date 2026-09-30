@@ -74,6 +74,48 @@ def get_items_from_ctns(ctn_list):
 #Stock Entry  event
 #type = "Material Transfer"
 #on submit , on cancel
+def validate_carton_transfer(doc, method):
+    """Block carton transfers that are not Closed, or missing source/target warehouse."""
+    if not doc.get("custom_transfer_by_carton"):
+        return
+
+    if not doc.from_warehouse:
+        frappe.throw("Default Source Warehouse is mandatory when transfer by carton is enabled.")
+
+    if not doc.to_warehouse:
+        frappe.throw("Default Target Warehouse is mandatory when transfer by carton is enabled.")
+
+    if not doc.get("custom_carton_table"):
+        frappe.throw("The carton table cannot be empty if Transfer By Carton is checked.")
+
+    for row in doc.custom_carton_table:
+        if not row.carton:
+            continue
+
+        carton = frappe.db.get_value(
+            "Carton",
+            row.carton,
+            ["company", "warehouse", "status"],
+            as_dict=True,
+        )
+        if not carton:
+            frappe.throw(f"Carton {row.carton} does not exist.")
+
+        if carton.status in ("Opened", "Archived"):
+            frappe.throw(
+                f"Carton {row.carton} cannot be transferred because its status is {carton.status}."
+            )
+
+        if carton.company != doc.company:
+            frappe.throw(f"Carton {row.carton} does not belong to company {doc.company}.")
+
+        if carton.warehouse != doc.from_warehouse:
+            frappe.throw(
+                f"Carton {row.carton} is stored in warehouse {carton.warehouse}. "
+                f"It does not match the source warehouse {doc.from_warehouse}."
+            )
+
+
 def update_carton_warehouse(doc, method):
     """
     Update CTN Box warehouse on submit or cancel of Material Transfer.

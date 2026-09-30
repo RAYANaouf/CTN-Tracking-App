@@ -18,8 +18,16 @@
   "place",
   "cb_4",
   "status",
+  "verified",
+  "verified_by",
+  "verified_on",
   "sb_2",
   "items",
+  "receipt_stock_entry",
+  "sb_verify",
+  "verification_items",
+  "verification_receipt",
+  "verification_issue",
   "sb_3",
   "ctn_status_html",
   "sb_4",
@@ -87,14 +95,68 @@
    "options": "Opened\nClosed"
   },
   {
-   "fieldname": "sb_2",
-   "fieldtype": "Section Break"
+   "fieldname": "verified",
+   "fieldtype": "Check",
+   "label": "Verified",
+   "read_only": 1
   },
   {
+   "fieldname": "verified_by",
+   "fieldtype": "Link",
+   "label": "Verified By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "verified_on",
+   "fieldtype": "Datetime",
+   "label": "Verified On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_2",
+   "fieldtype": "Section Break",
+   "label": "Packing List"
+  },
+  {
+   "description": "Packing list. Stock changes only when verification finds a quantity difference.",
    "fieldname": "items",
    "fieldtype": "Table",
    "label": "Items",
    "options": "Carton Item"
+  },
+  {
+   "fieldname": "receipt_stock_entry",
+   "fieldtype": "Link",
+   "label": "Packing List Receipt",
+   "options": "Stock Entry",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_verify",
+   "fieldtype": "Section Break",
+   "label": "Verification"
+  },
+  {
+   "fieldname": "verification_items",
+   "fieldtype": "Table",
+   "label": "Counted Items",
+   "options": "Carton Verification Item",
+   "read_only": 1
+  },
+  {
+   "fieldname": "verification_receipt",
+   "fieldtype": "Link",
+   "label": "Extra Qty Receipt",
+   "options": "Stock Entry",
+   "read_only": 1
+  },
+  {
+   "fieldname": "verification_issue",
+   "fieldtype": "Link",
+   "label": "Missing Qty Issue",
+   "options": "Stock Entry",
+   "read_only": 1
   },
   {
    "fieldname": "sb_3",
