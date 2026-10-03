@@ -25,7 +25,6 @@
   "items",
   "receipt_stock_entry",
   "sb_verify",
-  "verification_items",
   "verification_receipt",
   "verification_issue",
   "sb_3",
@@ -119,7 +118,7 @@
    "label": "Packing List"
   },
   {
-   "description": "Packing list. Stock changes only when verification finds a quantity difference.",
+   "description": "On verification, Qty is replaced by the counted quantity. Stock moves only by the difference.",
    "fieldname": "items",
    "fieldtype": "Table",
    "label": "Items",
@@ -136,13 +135,6 @@
    "fieldname": "sb_verify",
    "fieldtype": "Section Break",
    "label": "Verification"
-  },
-  {
-   "fieldname": "verification_items",
-   "fieldtype": "Table",
-   "label": "Counted Items",
-   "options": "Carton Verification Item",
-   "read_only": 1
   },
   {
    "fieldname": "verification_receipt",

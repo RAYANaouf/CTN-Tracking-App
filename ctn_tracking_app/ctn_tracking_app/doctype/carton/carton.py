@@ -17,7 +17,7 @@ class Carton(Document):
 		if self.verified and not previous_verified and not self.flags.get("from_verify"):
 			frappe.throw("Use the Verify Carton button on an Opened carton.")
 
-		if previous_verified or self.flags.get("from_verify"):
+		if previous_verified:
 			self._lock_packing_list()
 
 	def _lock_packing_list(self):
@@ -31,12 +31,12 @@ class Carton(Document):
 		}
 		current_names = {row.name for row in (self.items or []) if row.name}
 		if set(previous) != current_names or len(self.items or []) != len(previous):
-			frappe.throw("The packing list cannot be changed after it has entered stock.")
+			frappe.throw("The carton quantity cannot be changed after verification.")
 
 		for row in self.items or []:
 			prev = previous.get(row.name)
 			if not prev or prev.item != row.item or flt(prev.qty) != flt(row.qty):
-				frappe.throw("The packing list cannot be changed after it has entered stock.")
+				frappe.throw("The carton quantity cannot be changed after verification.")
 
 @frappe.whitelist()
 def get_transactions(carton_name):
@@ -123,16 +123,7 @@ def verify_carton(carton_name, lines):
 			incoming=False,
 		)
 
-	for row in rows:
-		if not row["difference"]:
-			continue
-		txn = frappe.new_doc("Carton Transaction")
-		txn.type = "In" if row["difference"] > 0 else "Out"
-		txn.carton = doc.name
-		txn.item = row["item"]
-		txn.qty = abs(row["difference"])
-		txn.insert(ignore_permissions=True)
-		txn.submit()
+	_apply_counted_quantities(doc, counted)
 
 	doc.flags.from_verify = True
 	doc.verified = 1
@@ -140,15 +131,29 @@ def verify_carton(carton_name, lines):
 	doc.verified_on = now_datetime()
 	doc.verification_receipt = receipt.name if receipt else None
 	doc.verification_issue = issue.name if issue else None
-	doc.set("verification_items", [])
-	for row in rows:
-		doc.append("verification_items", row)
 	doc.save(ignore_permissions=True)
 
 	return {
 		"receipt": receipt.name if receipt else None,
 		"issue": issue.name if issue else None,
 	}
+
+
+def _apply_counted_quantities(doc, counted):
+	"""Replace the packing-list qty with the counted qty so the carton HTML uses it."""
+	seen = set()
+	for row in doc.items or []:
+		if not row.item:
+			continue
+		if row.item in seen:
+			row.qty = 0
+			continue
+		seen.add(row.item)
+		row.qty = flt(counted.get(row.item, 0))
+
+	for item, qty in counted.items():
+		if item not in seen:
+			doc.append("items", {"item": item, "qty": flt(qty)})
 
 
 def _make_stock_entry(stock_entry_type, company, warehouse, totals, remarks, incoming):
